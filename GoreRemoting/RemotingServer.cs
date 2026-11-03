@@ -702,7 +702,7 @@ public class RemotingServer : IRemotingParty
 			await threadSafeResponseStream.CompleteAsync().ConfigureAwait(false);
 
 			// Wait for END_STREAM from client to be processed
-			await WaitForCancellationAsync(context.CancellationToken);
+			await context.WaitForCancellationAsync().ConfigureAwait(false);
 		}
 		catch (RpcException e)
 		{
@@ -714,14 +714,64 @@ public class RemotingServer : IRemotingParty
 		}
 	}
 
-	public static Task WaitForCancellationAsync(CancellationToken token)
+
+
+
+}
+
+public static class ServerCallContextExtensions
+{
+	/// <summary>
+	/// Completes when END_STREAM from the client is processed in the server.
+	/// There is probably many other reasons why context.CancellationToken is set, and we can't know the reason,
+	/// but at least processing END_STREAM from client is one of the reasons.
+	/// </summary>
+	public static Task WaitForCancellationAsync(this ServerCallContext context)
 	{
+		var token = context.CancellationToken;
+
+		// Already cancelled: skip allocating the TCS.
 		if (token.IsCancellationRequested)
 			return Task.CompletedTask;
 
-		var tcs = new TaskCompletionSource<bool>();
+		// RunContinuationsAsynchronously: continuations never run inline on the thread that triggers cancellation.
+		var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		// Registration is not disposed: the token is per-call, so it is released when the call ends.
 		token.Register(() => tcs.TrySetResult(true));
 		return tcs.Task;
+	}
+
+	/// <summary>
+	/// Completes when END_STREAM from the client is processed in the server or the timeout elapses, whichever comes first.
+	/// There is probably many other reasons why context.CancellationToken is set, and we can't know the reason,
+	/// but at least processing END_STREAM from client is one of the reasons.
+	/// </summary>
+	/// <param name="context">The server call context.</param>
+	/// <param name="timeout">Maximum time to wait. Use <see cref="Timeout.InfiniteTimeSpan"/> for no timeout.</param>
+	/// <returns>True if the client cancelled, false if the wait timed out.</returns>
+	public static async Task<bool> WaitForCancellationAsync(this ServerCallContext context, TimeSpan timeout)
+	{
+		var token = context.CancellationToken;
+
+		// Already cancelled: no need to set anything up.
+		if (token.IsCancellationRequested)
+			return true;
+
+		// Linked source fires on either client cancellation or the timeout.
+		using var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(token);
+		linkedSource.CancelAfter(timeout);
+
+		var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		// Disposed on exit so the linked source's hook on the call token is released if the timeout wins.
+		using var registration = linkedSource.Token.Register(() => tcs.TrySetResult(true));
+
+		await tcs.Task;
+
+		// Distinguish the cause: only the original token tells us if the client cancelled.
+		// Benign race: if the client cancels right after a timeout, this returns true.
+		return token.IsCancellationRequested;
 	}
 }
 
