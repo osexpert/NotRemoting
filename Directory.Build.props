@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
   <PropertyGroup>
 
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -12,14 +12,14 @@
     <RepoRootPath>$(MSBuildThisFileDirectory)</RepoRootPath>
     <PackageOutputPath>$(RepoRootPath)bin\Packages\$(Configuration)\NuGet\</PackageOutputPath>
 
-    <PackageProjectUrl>https://github.com/osexpert/GoreRemoting</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/osexpert/NotRemoting</PackageProjectUrl>
     <PackageLicenseUrl></PackageLicenseUrl>
-    <RepositoryUrl>https://github.com/osexpert/GoreRemoting.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/osexpert/NotRemoting.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Company>osexpert</Company>      
-    <PackageReleaseNotes>See https://github.com/osexpert/GoreRemoting/blob/main/CHANGELOG.md for details</PackageReleaseNotes>
+    <PackageReleaseNotes>See https://github.com/osexpert/NotRemoting/blob/main/CHANGELOG.md for details</PackageReleaseNotes>
     
     <VersionPrefix>0.0.5</VersionPrefix>
     <PackageTags>remoting rpc grpc dotnet-remoting</PackageTags>
@@ -44,3 +44,4 @@
   </ItemGroup>
     
 </Project>
+

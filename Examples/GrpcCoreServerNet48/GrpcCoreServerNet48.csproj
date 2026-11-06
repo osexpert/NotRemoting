@@ -20,10 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" />
-    <ProjectReference Include="..\..\GoreRemoting\GoreRemoting.csproj" />
+    <ProjectReference Include="..\..\NotRemoting.Serialization.BinaryFormatter\NotRemoting.Serialization.BinaryFormatter.csproj" />
+    <ProjectReference Include="..\..\NotRemoting\NotRemoting.csproj" />
   </ItemGroup>
 
 </Project>
+
 
 

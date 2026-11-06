@@ -1,4 +1,4 @@
-# GoreRemoting
+﻿# NotRemoting
 
 	public interface IService
 	{
@@ -40,10 +40,10 @@
 		var echo = await proxy.EchoAsync("Hello world!");
 	}
   
-GoreRemoting https://github.com/osexpert/GoreRemoting is based on CoreRemoting
+NotRemoting https://github.com/osexpert/NotRemoting is based on CoreRemoting
 https://github.com/theRainbird/CoreRemoting  
 
-GoreRemoting is (just like CoreRemoting) a way to migrate from .NET Remoting, but with Grpc instead of WebSockets\Sockets.
+NotRemoting is (just like CoreRemoting) a way to migrate from .NET Remoting, but with Grpc instead of WebSockets\Sockets.
 
 ## Runtime
 Runs on .net 4.8 and later. Can use Grpc.Core or grpc-dotnet as tranport.
@@ -117,7 +117,7 @@ A NoCompressionProvider exist in case you want to use eg. Lz4 as default but wan
 Support Task\ValueTask in service methods result and in result from delegate arguments.
 
 ## Removed from CoreRemoting
-CoreRemoting use WebSockets while GoreRemoting is a rewrite (sort of) to use Grpc instead.  
+CoreRemoting use WebSockets while NotRemoting is a rewrite (sort of) to use Grpc instead.  
 Encryption, authentication, session management, DependencyInjection, Linq expression arguments removed (maybe some can be added back if demand).
 
 ## Delegate arguments
@@ -142,7 +142,7 @@ OneWay methods not supported. Methods always wait for result\exception.
 
 ## Example migration
 - While on .net 4.8\.net Remoting, change all services to stateless single call. Store server state in a session object. Reduce MarshalByRef usage to a minimum: only progress callbacks during server calls and server to client callbacks (messages) via session callback channel.
-- Change to GoreRemoting with Grpc.Core transport but keep using BinaryFormatter.
+- Change to NotRemoting with Grpc.Core transport but keep using BinaryFormatter.
 - After client login, call a server method that awaits forever. Change session callback channel to use this method as the callback channel (using a delegate argument).
 - Change progress callbacks (and other callbacks that happen during a server call) to use delegate arguments.
 - Upgrade to latest .net
@@ -219,3 +219,4 @@ Conclusion: StreamingFuncAttribute\StreamingDoneException does even out the numb
 
 ## Grpc implementations
 Can use both Grpc.Core https://grpc.io/blog/grpc-csharp-future/ and grpc-dotnet https://github.com/grpc/grpc-dotnet.
+

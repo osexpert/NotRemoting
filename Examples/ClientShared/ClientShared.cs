@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using GoreRemoting;
-using GoreRemoting.Serialization.MessagePack;
+using NotRemoting;
+using NotRemoting.Serialization.MessagePack;
 
 namespace ClientShared;
 
@@ -140,3 +140,4 @@ public interface IOtherService
 {
 	string Get();
 }
+

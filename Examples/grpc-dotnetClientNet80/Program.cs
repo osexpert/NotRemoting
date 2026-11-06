@@ -1,6 +1,6 @@
 ﻿using ClientShared;
-using GoreRemoting;
-using GoreRemoting.Serialization.BinaryFormatter;
+using NotRemoting;
+using NotRemoting.Serialization.BinaryFormatter;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -58,3 +58,4 @@ internal class Program
 	}
 
 }
+

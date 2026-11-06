@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using GoreRemoting;
-using GoreRemoting.Serialization.BinaryFormatter;
+using NotRemoting;
+using NotRemoting.Serialization.BinaryFormatter;
 using Grpc.Core;
 using ServerShared;
 
@@ -66,3 +66,4 @@ internal class Program
 		return new(Activator.CreateInstance(serviceType, sessID)!, true);
 	}
 }
+

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
-using GoreRemoting;
-using GoreRemoting.Serialization.BinaryFormatter;
+using NotRemoting;
+using NotRemoting.Serialization.BinaryFormatter;
 using Grpc.AspNetCore.Server.Model;
 using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
@@ -58,8 +58,8 @@ internal class Program
 
 		services.AddSingleton<IDITest>(new DITest());
 
-		services.AddSingleton<GoreRemotingService>();
-		services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IServiceMethodProvider<GoreRemotingService>), new GoreRemotingMethodProvider(server)));
+		services.AddSingleton<NotRemotingService>();
+		services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IServiceMethodProvider<NotRemotingService>), new NotRemotingMethodProvider(server)));
 
 		builder.WebHost.ConfigureKestrel(kestrel =>
 		{
@@ -87,7 +87,7 @@ internal class Program
 
 		var app = builder.Build();
 
-		app.MapGrpcService<GoreRemotingService>();
+		app.MapGrpcService<NotRemotingService>();
 		app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
 		var task = app.RunAsync();
@@ -109,7 +109,7 @@ internal class Program
 	//}
 
 	//private static readonly Lazy<ObjectFactory> _objectFactory = new Lazy<ObjectFactory>(static ()
-	//	=> ActivatorUtilities.CreateFactory(typeof(GoreRemotingService), new Type[] { typeof(Guid) }));
+	//	=> ActivatorUtilities.CreateFactory(typeof(NotRemotingService), new Type[] { typeof(Guid) }));
 
 	ConcurrentDictionary<Type, ObjectFactory> _factories = new();
 
@@ -129,3 +129,4 @@ internal class Program
 		//		return Activator.CreateInstance(serviceType, sessID) ?? throw new Exception("Can't create instance: " + serviceType);
 	}
 }
+

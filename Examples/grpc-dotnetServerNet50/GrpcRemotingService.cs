@@ -1,8 +1,8 @@
 ﻿namespace grpcdotnetServerNet50
 {
-	internal class GoreRemotingService
+	internal class NotRemotingService
 	{
-		// dummy class, methods added runtime by GoreRemotingMethodProvider
+		// dummy class, methods added runtime by NotRemotingMethodProvider
 	}
 
 }

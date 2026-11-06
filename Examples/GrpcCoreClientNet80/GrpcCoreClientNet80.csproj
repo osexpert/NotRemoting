@@ -13,9 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" />
-    <ProjectReference Include="..\..\GoreRemoting.Serialization.MessagePack\GoreRemoting.Serialization.MessagePack.csproj" />
-    <ProjectReference Include="..\..\GoreRemoting\GoreRemoting.csproj" />
+    <ProjectReference Include="..\..\NotRemoting.Serialization.BinaryFormatter\NotRemoting.Serialization.BinaryFormatter.csproj" />
+    <ProjectReference Include="..\..\NotRemoting.Serialization.MessagePack\NotRemoting.Serialization.MessagePack.csproj" />
+    <ProjectReference Include="..\..\NotRemoting\NotRemoting.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,3 +23,4 @@
   </ItemGroup>
 
 </Project>
+

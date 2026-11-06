@@ -1,3 +1,8 @@
+## 0.0.6 (next)
+* Fix ENHANCE_YOUR_CALM when mixing grpc-core and grpc-dotnet
+* Fix stream errors when client send END_STRAM much later than the server (now the server wait for client to send END_STREAM first)
+* Rename to NotRemoting
+
 ## 0.0.5
 * Support IAsyncEnumerable as result and as arguments
 * Support more than 1 delegate with result

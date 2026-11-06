@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using GoreRemoting;
+using NotRemoting;
 
 namespace ServerShared;
 
@@ -279,3 +279,4 @@ class OtherService : IOtherService
 		return DateTime.Now.ToString();
 	}
 }
+

@@ -1,7 +1,7 @@
 ﻿using System;
 using ClientShared;
-using GoreRemoting;
-using GoreRemoting.Serialization.BinaryFormatter;
+using NotRemoting;
+using NotRemoting.Serialization.BinaryFormatter;
 using Grpc.Core;
 
 namespace GrpcCoreClientNet48;
@@ -38,3 +38,4 @@ internal class Program
 		p.Headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
 	}
 }
+
