@@ -1,4 +1,4 @@
-﻿# NotRemoting
+﻿# NotRemoting (formerly known as GoreRemoting)
 
 	public interface IService
 	{
