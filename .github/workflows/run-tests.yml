@@ -1,0 +1,42 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        target-framework: [net8.0, net9.0, net48]
+        exclude:
+          - os: ubuntu-latest
+            target-framework: net48
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore NotRemoting.Tests/NotRemoting.Tests.csproj
+
+    - name: Run tests
+      run: dotnet test NotRemoting.Tests/NotRemoting.Tests.csproj --framework ${{ matrix.target-framework }} --no-restore --verbosity normal
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.target-framework }}
+        path: NotRemoting.Tests/TestResults/**
+        retention-days: 7
