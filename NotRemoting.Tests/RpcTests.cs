@@ -772,7 +772,6 @@ public class RpcTests
 						{
 							var r = echo("hi");
 							Assert.AreEqual("hihi", r);
-
 							Test_Thread_DidRun = true;
 						}
 						catch (Exception e)
@@ -800,6 +799,10 @@ public class RpcTests
 					}
 					Assert.AreEqual("Too late, result sent", ex.Message);
 				}
+				catch (Exception e)
+				{
+					Test_Thread_AssertEx = e;
+				}
 				finally
 				{
 					Test_Thread_Done = true;
@@ -822,6 +825,7 @@ public class RpcTests
 	volatile static bool Test_Thread_DidRun = false;
 	volatile static bool Test_Thread_Callback_Failed = false;
 	volatile static bool Test_Thread_Done = false;
+	static Exception? Test_Thread_AssertEx;
 
 
 	[TestMethod]
@@ -834,6 +838,14 @@ public class RpcTests
 	[DataRow(Serializer.Protobuf)]
 	public async Task Delegate_callback_after_return(Serializer ser)
 	{
+		// null from last DataRow
+		Test_HasReturned = false;
+		Test_Thread_Started = false;
+		Test_Thread_DidRun = false;
+		Test_Thread_Callback_Failed = false;
+		Test_Thread_Done = false;
+		Test_Thread_AssertEx = null;
+
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
 		var port = Ports.GetNext();
@@ -849,7 +861,6 @@ public class RpcTests
 
 		var res = proxy.Test((e) =>
 		{
-
 			wasHere = true;
 			return e + "hi";
 		});
@@ -864,7 +875,9 @@ public class RpcTests
 		{
 			Thread.Sleep(10);
 		}
-		Assert.IsTrue(Test_Thread_Done);
+
+		var assertEx = Test_Thread_AssertEx;
+		Assert.IsNull(assertEx, assertEx?.ToString());
 		Assert.IsTrue(Test_Thread_Callback_Failed);
 	}
 
@@ -882,49 +895,69 @@ public class RpcTests
 
 		public string Test(Func<S1, R1> echo, Func<S2, R2> echo2, Func<S3, R3> echo3)
 		{
-			int i = 0, i1 = 0, i2 = 0;
-			var t1 = new Thread(() =>
+			int count1 = 0, count2 = 0, count3 = 0;
+			Exception? threadEx = null;
+
+			void Loop(Action body)
 			{
-				while (run)
+				try
 				{
-					var r = echo(new S1("hello"));
-					Assert.AreEqual("hellohi", r.r1);
-					i++;
+					while (run)
+						body();
 				}
-			});
+				catch (Exception e)
+				{
+					// Only a failure while still running is a real error
+					if (run)
+						threadEx = e;
+				}
+			}
+
+			var t1 = new Thread(() => Loop(() =>
+			{
+				var r = echo(new S1("hello"));
+				Assert.AreEqual("hellohi", r.r1);
+				count1++;
+			}));
+			var t2 = new Thread(() => Loop(() =>
+			{
+				var r = echo2(new S2("Yhello"));
+				Assert.AreEqual("Yhellohi", r.r2);
+				count2++;
+			}));
+			var t3 = new Thread(() => Loop(() =>
+			{
+				var r = echo3(new S3("Xhello"));
+				Assert.AreEqual("Xhellohi", r.r3);
+				count3++;
+			}));
+
 			t1.Start();
-			var t2 = new Thread(() =>
-			{
-				while (run)
-				{
-					var r = echo2(new S2("Yhello"));
-					Assert.AreEqual("Yhellohi", r.r2);
-					i1++;
-				}
-			});
 			t2.Start();
-			var t3 = new Thread(() =>
-			{
-				while (run)
-				{
-					var r = echo3(new S3("Xhello"));
-					Assert.AreEqual("Xhellohi", r.r3);
-					i2++;
-				}
-			});
 			t3.Start();
 
-			Thread.Sleep(1000);
+			try
+			{
+				// Poll like Test2 instead of a fixed sleep
+				for (int j = 0; j < 100; j++)
+				{
+					Thread.Sleep(100);
+					if (count1 > 0 && count2 > 0 && count3 > 0)
+						break;
+				}
+			}
+			finally
+			{
+				run = false;
+				t1.Join();
+				t2.Join();
+				t3.Join();
+			}
 
-			Assert.IsGreaterThan(0, i);
-			Assert.IsGreaterThan(0, i1);
-			Assert.IsGreaterThan(0, i2);
-
-			run = false;
-
-			t1.Join();
-			t2.Join();
-			t3.Join();
+			Assert.IsNull(threadEx);
+			Assert.IsGreaterThan(0, count1);
+			Assert.IsGreaterThan(0, count2);
+			Assert.IsGreaterThan(0, count3);
 
 			return "øæå";
 		}
@@ -1653,7 +1686,7 @@ public class RpcTests
 		Assert.AreEqual("test", throw9Ex!.Message);
 
 		// I randomly get  System.Exception: Shutdown check: Detected 1 pending batch completions.
-		server.DisposeKills = true;
+		//server.DisposeKills = true;
 
 	}
 
