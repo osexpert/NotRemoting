@@ -965,7 +965,12 @@ public class RpcTests
 			});
 			t3.Start();
 
-			Thread.Sleep(1000);
+			for (int j = 0; j < 100; j++)
+			{
+				Thread.Sleep(100);
+				if (i > 0 && i1 > 0 && i2 > 0)
+					break;
+			}
 
 			Assert.IsGreaterThan(0, i);
 			Assert.IsGreaterThan(0, i1);
@@ -1646,6 +1651,10 @@ public class RpcTests
 		Assert.AreEqual("test", throw7Ex!.Message);
 		Assert.IsNull(throw8Ex);
 		Assert.AreEqual("test", throw9Ex!.Message);
+
+		// I randomly get  System.Exception: Shutdown check: Detected 1 pending batch completions.
+		server.DisposeKills = true;
+
 	}
 
 

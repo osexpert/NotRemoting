@@ -29,10 +29,12 @@ public class NativeServer : RemotingServer, IAsyncDisposable
 		_server.Ports.Add("0.0.0.0", port, ServerCredentials.Insecure);
 	}
 
+	public bool DisposeKills = false;
+
 	public ValueTask DisposeAsync()
 	{
 		if (_server != null)
-			return new ValueTask(_server.ShutdownAsync());
+			return new ValueTask(DisposeKills ? _server.KillAsync() : _server.ShutdownAsync());
 		else
 			return default;
 	}
