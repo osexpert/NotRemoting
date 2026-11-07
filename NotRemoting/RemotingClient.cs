@@ -1,0 +1,172 @@
+﻿using System.Collections.Concurrent;
+using System.Reflection;
+using NotRemoting.RpcMessaging;
+using Grpc.Core;
+using Grpc.Net.Compression;
+using Nerdbank.Streams;
+
+namespace NotRemoting;
+
+public class RemotingClient : IRemotingParty
+{
+	internal readonly ClientConfig _config;
+	readonly CallInvoker _callInvoker;
+	ConcurrentDictionary<(MethodInfo, Type, int), Type[]> IRemotingParty.TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, Type, int), Type[]>();
+	ConcurrentDictionary<Type, Type?> IRemotingParty.AsyncEnuTypesCache { get; } = new ConcurrentDictionary<Type, Type?>();
+
+	internal ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodLookup = new();
+
+
+	public RemotingClient(CallInvoker callInvoker, ClientConfig config)
+	{
+		_config = config;
+		_callInvoker = callInvoker;
+
+		DuplexCallDescriptor = Descriptors.GetDuplexCall(config.GrpcServiceName, "DuplexCall",
+			Marshallers.Create<RequestMessage>(SerializeRequest, DeserializeRequest),
+			Marshallers.Create<ResponseMessage>(SerializeResponse, DeserializeResponse)
+			);
+	}
+	
+	private void SerializeRequest(RequestMessage arg, SerializationContext sc)
+	{
+		try
+		{
+			using (var s = sc.GetBufferWriter().AsStream())
+			{
+				var bw = new BinaryWriterEx(s);
+
+				bw.Write((byte)Constants.SerializationVersion); // version
+
+				bw.Write((byte)arg.RequestType);
+
+				bw.Write(arg.Serializer.Name);
+				bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
+				bw.Write(arg.ServiceName);
+				bw.Write(arg.MethodName);
+
+				MethodInfo method = GetServiceMethod(arg.ServiceName, arg.MethodName);
+
+				arg.Serialize(this, s, method);
+			}
+		}
+		finally
+		{
+			sc.Complete();
+		}
+	}
+
+	private ResponseMessage DeserializeResponse(DeserializationContext arg)
+	{
+		using var s = arg.PayloadAsReadOnlySequence().AsStream();
+
+		var br = new BinaryReaderEx(s);
+
+		byte version = br.ReadByte();
+		if (version != Constants.SerializationVersion)
+			throw new Exception($"Unsupported version: {version}");
+
+		var mType = (ResponseType)br.ReadByte();
+
+		var serializerName = br.ReadString();
+		var compressorName = br.ReadString();
+		var serviceName = br.ReadString();
+		var methodName = br.ReadString();
+
+		var serializer = _config.GetSerializerByName(serializerName);
+
+		ICompressionProvider? compressor = null;
+		if (!string.IsNullOrEmpty(compressorName))
+		{
+			compressor = _config.GetCompressorByName(compressorName);
+		}
+
+		MethodInfo method = GetServiceMethod(serviceName, methodName);
+
+		return ResponseMessage.Deserialize(this, s, mType, serviceName, methodName, method,
+			serializer, compressor);
+	}
+
+	private RequestMessage DeserializeRequest(DeserializationContext arg)
+	{
+		throw new NotSupportedException();
+	}
+
+	private void SerializeResponse(ResponseMessage arg, SerializationContext sc)
+	{
+		throw new NotSupportedException();
+	}
+
+	private MethodInfo GetServiceMethod(string serviceName, string methodName)
+	{
+		return _serviceMethodLookup[(serviceName, methodName)];
+	}
+
+	public Method<RequestMessage, ResponseMessage> DuplexCallDescriptor { get; }
+
+	private static readonly Castle.DynamicProxy.ProxyGenerator ProxyGenerator = new();
+
+	public T CreateProxy<T>()
+	{
+		var iface = typeof(T);
+		if (!iface.IsInterface)
+			throw new Exception($"{iface.Name} is not an interface");
+
+		var serviceProxyType = typeof(ServiceProxy<>).MakeGenericType(iface);
+		var serviceProxy = Activator.CreateInstance(serviceProxyType, this /* RemotingClient */);
+
+		var proxy = ProxyGenerator.CreateInterfaceProxyWithoutTarget(
+			interfaceToProxy: iface,
+			interceptor: (Castle.DynamicProxy.IInterceptor)serviceProxy);
+
+		return (T)proxy;
+	}
+
+	public MethodCallMessageBuilder MethodCallMessageBuilder = new();
+
+	internal MethodResultMessage Invoke(RequestMessage req, Func<ResponseMessage, Func<RequestMessage, Task>, Task<MethodResultMessage?>> reponseHandler, CallOptions callOpt)
+	{
+		// Can this hang or deadlocks?
+		return InvokeAsync(req, reponseHandler, callOpt).GetAwaiter().GetResult();
+	}
+
+	internal async Task<MethodResultMessage> InvokeAsync(RequestMessage req, Func<ResponseMessage, Func<RequestMessage, Task>, Task<MethodResultMessage?>> reponseHandler, CallOptions callOpt)
+	{
+		if (req.RequestType != RequestType.MethodCall)
+			throw new Exception("not RequestType.MethodCall");
+
+		using (var call = _callInvoker.AsyncDuplexStreamingCall(DuplexCallDescriptor, null, callOpt))
+		{
+			try
+			{
+				await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
+				while (await call.ResponseStream.MoveNext().ConfigureAwait(false))
+				{
+					var resultMsg = await reponseHandler(call.ResponseStream.Current, call.RequestStream.WriteAsync).ConfigureAwait(false);
+					if (resultMsg != null)
+						return resultMsg;
+				}
+				throw new Exception("No result message");
+			}
+			finally
+			{
+				// send END_STREAM to server
+				await call.RequestStream.CompleteAsync().ConfigureAwait(false);
+			}
+		}
+	}
+
+	public event EventHandler<Exception>? OneWayException;
+
+	internal void OnOneWayException(Exception ex)
+	{
+		OneWayException?.Invoke(this, ex);
+	}
+}
+
+public interface IRemotingParty
+{
+	ConcurrentDictionary<(MethodInfo, Type, int), Type[]> TypesCache { get; }
+	ConcurrentDictionary<Type, Type?> AsyncEnuTypesCache { get; }
+}
+

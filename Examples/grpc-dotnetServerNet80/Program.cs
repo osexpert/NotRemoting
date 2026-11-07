@@ -58,8 +58,8 @@ internal class Program
 
 		services.AddSingleton<IDITest>(new DITest());
 
-		services.AddSingleton<NotRemotingService>();
-		services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IServiceMethodProvider<NotRemotingService>), new NotRemotingMethodProvider(server)));
+		services.AddSingleton<RemotingService>();
+		services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IServiceMethodProvider<RemotingService>), new RemotingMethodProvider(server)));
 
 		builder.WebHost.ConfigureKestrel(kestrel =>
 		{
@@ -87,7 +87,7 @@ internal class Program
 
 		var app = builder.Build();
 
-		app.MapGrpcService<NotRemotingService>();
+		app.MapGrpcService<RemotingService>();
 		app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
 		var task = app.RunAsync();

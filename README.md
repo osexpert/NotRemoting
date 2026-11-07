@@ -79,7 +79,7 @@ Exceptions thrown are marshalled based on a setting in ClientConfig\ServerConfig
 The default for all serializers (except BinaryFormatter) are ExceptionStrategy.Clone.
 BinaryFormatter has its own ExceptionStrategy setting (override) and its default is ExceptionStrategy.BinaryFormatter.
 
-### Exception strategies (GoreRemoring)
+### Exception strategies
 	public enum ExceptionStrategy
 	{
 		/// <summary>

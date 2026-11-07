@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0;net9.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+    <SuppressTfmSupportBuildErrors>true</SuppressTfmSupportBuildErrors>
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.Core" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Condition="'$(TargetFramework)' == 'net48'" />
+    <PackageReference Include="Portable.System.DateTimeOnly" Condition="'$(TargetFramework)' == 'net48'" />
+    <PackageReference Include="System.Runtime.Serialization.Formatters" Condition="'$(TargetFramework)' == 'net9.0'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NotRemoting.Compression.Lz4\NotRemoting.Compression.Lz4.csproj" />
+    <ProjectReference Include="..\NotRemoting.Serialization.BinaryFormatter\NotRemoting.Serialization.BinaryFormatter.csproj" />
+    <ProjectReference Include="..\NotRemoting.Serialization.Json\NotRemoting.Serialization.Json.csproj" />
+    <ProjectReference Include="..\NotRemoting.Serialization.MemoryPack\NotRemoting.Serialization.MemoryPack.csproj" Condition="'$(TargetFramework)' != 'net48'" />
+    <ProjectReference Include="..\NotRemoting.Serialization.MessagePack\NotRemoting.Serialization.MessagePack.csproj" />
+    <ProjectReference Include="..\NotRemoting.Serialization.Protobuf\NotRemoting.Serialization.Protobuf.csproj" />
+    <ProjectReference Include="..\NotRemoting.Tests.ExternalTypes\NotRemoting.Tests.ExternalTypes.csproj" />
+    <ProjectReference Include="..\NotRemoting\NotRemoting.csproj" />
+  </ItemGroup>
+
+</Project>
+

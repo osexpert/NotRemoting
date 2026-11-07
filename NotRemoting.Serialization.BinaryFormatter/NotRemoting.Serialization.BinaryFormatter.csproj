@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net9.0</TargetFrameworks>
+    <Authors>osexpert, Hagen Siegel</Authors>
+    <Copyright>2022 osexpert, 2022 Hagen Siegel</Copyright>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+    <NoWarn>$(NoWarn);SYSLIB0011;SYSLIB0003;SYSLIB0051;SYSLIB0050;</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NotRemoting\NotRemoting.csproj" />
+  </ItemGroup>
+
+</Project>
+

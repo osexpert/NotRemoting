@@ -1,0 +1,20 @@
+﻿<Solution>
+  <Folder Name="/Examples/">
+    <Project Path="Examples/grpc-dotnetClientNet80/grpc-dotnetClientNet80.csproj" />
+    <Project Path="Examples/grpc-dotnetServerNet80/grpc-dotnetServerNet80.csproj" />
+    <Project Path="Examples/GrpcCoreClientNet48/GrpcCoreClientNet48.csproj" />
+    <Project Path="Examples/GrpcCoreClientNet80/GrpcCoreClientNet80.csproj" />
+    <Project Path="Examples/GrpcCoreServerNet48/GrpcCoreServerNet48.csproj" />
+    <Project Path="Examples/GrpcCoreServerNet80/GrpcCoreServerNet80.csproj" />
+  </Folder>
+  <Project Path="NotRemoting.Compression.Lz4/NotRemoting.Compression.Lz4.csproj" />
+  <Project Path="NotRemoting.Serialization.BinaryFormatter/NotRemoting.Serialization.BinaryFormatter.csproj" />
+  <Project Path="NotRemoting.Serialization.Json/NotRemoting.Serialization.Json.csproj" />
+  <Project Path="NotRemoting.Serialization.MemoryPack/NotRemoting.Serialization.MemoryPack.csproj" />
+  <Project Path="NotRemoting.Serialization.MessagePack/NotRemoting.Serialization.MessagePack.csproj" />
+  <Project Path="NotRemoting.Serialization.Protobuf/NotRemoting.Serialization.Protobuf.csproj" />
+  <Project Path="NotRemoting.Tests.ExternalTypes/NotRemoting.Tests.ExternalTypes.csproj" />
+  <Project Path="NotRemoting.Tests/NotRemoting.Tests.csproj" />
+  <Project Path="NotRemoting/NotRemoting.csproj" />
+</Solution>
+
