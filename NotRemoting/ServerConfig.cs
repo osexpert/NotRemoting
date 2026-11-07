@@ -37,7 +37,7 @@ public class ServerConfig
 
 	private Dictionary<string, ISerializerAdapter> _serializers = new();
 
-	public string GrpcServiceName { get; set; } = Constants.GrpcServiceName;
+	public string ServiceName { get; set; } = Constants.ServiceName;
 
 	public ServerConfig()
 	{

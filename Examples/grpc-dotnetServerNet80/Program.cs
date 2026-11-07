@@ -116,7 +116,7 @@ internal class Program
 	ServiceHandle CreateInstance(Type serviceType, ServerCallContext context)
 	{
 		//Guid sessID = (Guid)CallContext.GetData("SessionId");
-		Guid sessionId = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
+		Guid sessionId = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeader)!);
 
 		Console.WriteLine("SessionId: " + sessionId);
 

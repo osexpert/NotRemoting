@@ -3,9 +3,9 @@
 public static class Constants
 {
 
-	public const string SessionIdHeaderKey = "not-session-id";
+	public const string SessionIdHeader = "X-Session-Id";
 
-	public const string GrpcServiceName = "NotRemoting";
+	public const string ServiceName = "NotRemoting";
 
 	/// <summary>
 	/// v2: 
@@ -15,7 +15,7 @@ public static class Constants
 	/// - changed a lot...not pushing all args. Adding ParameterName\Position?
 	/// - Add result types (kind).
 	/// v4:
-	/// - include execption map in gorelizer
+	/// - include execption map in serializer
 	/// - move request type to top
 	/// v5:
 	/// - if only one type, no need to make generic Args (except for protobuf)

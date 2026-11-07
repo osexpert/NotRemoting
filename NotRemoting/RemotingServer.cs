@@ -31,7 +31,7 @@ public class RemotingServer : IRemotingParty
 	{
 		_config = config;
 
-		DuplexCallDescriptor = Descriptors.GetDuplexCall(config.GrpcServiceName, "DuplexCall",
+		DuplexCallDescriptor = Descriptors.GetDuplexCall(config.ServiceName, "DuplexCall",
 			Marshallers.Create<RequestMessage>(SerializeRequest, DeserializeRequest),
 			Marshallers.Create<ResponseMessage>(SerializeResponse, DeserializeResponse)
 			);

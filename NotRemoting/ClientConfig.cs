@@ -18,7 +18,7 @@ public class ClientConfig
 	//public delegate void ActionRef<T1, T2, T3, T4, T5>(T1 a, T2 b, T3 c, ref T4 d, ref T5 e);
 	public Action<BeforeCallArgs>? BeforeCall { get; set; }
 
-	public string GrpcServiceName { get; set; } = Constants.GrpcServiceName;
+	public string ServiceName { get; set; } = Constants.ServiceName;
 
 	public ClientConfig()
 	{

@@ -53,7 +53,7 @@ internal class Program
 
 	public void BeforeBuildMethodCallMessage(BeforeCallArgs p)
 	{
-		p.Headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
+		p.Headers.Add(Constants.SessionIdHeader, pSessID.ToString());
 		//CallContext.SetData("SessionId", pSessID);
 	}
 
