@@ -758,95 +758,76 @@ public class RpcTests
 
 	public class DelegateTest : IDelegateTest
 	{
+		public volatile bool HasReturned;
+		public volatile bool ThreadStarted;
+		public volatile bool ThreadDidRun;
+		public volatile bool ThreadCallbackFailed;
+		public volatile bool ThreadDone;
+		public Exception? ThreadAssertEx;
+
 		public string Test(Func<string, string> echo)
 		{
 			var t = new Thread(() =>
 			{
-				Test_Thread_Started = true;
+				ThreadStarted = true;
 				try
 				{
-					Exception? ex = null;
+					Exception? callbackEx = null;
 					while (true)
 					{
 						try
 						{
 							var r = echo("hi");
 							Assert.AreEqual("hihi", r);
-							Test_Thread_DidRun = true;
+							ThreadDidRun = true;
 						}
 						catch (Exception e)
 						{
-							ex = e;
-
-
-							// various exceptions seen here
-							// Exception: "No delegate request data"
-							// e can sometimes be null!
-
-							//                        var eWasNull = e == null;
-							//                        var masIsNoReqData = e?.Message == "No delegate request data";
-							//                        var mess = e?.Message;
-							//                        var messIsNull = mess == null;
-							//                        var inner = e?.InnerException;
-							//                        var b = eWasNull || messIsNull || masIsNoReqData;
-							//Assert.True(b);
-
-							Test_Thread_Callback_Failed = true;
-							//Assert.True(e is ChannelClosedException);
-
+							callbackEx = e;
+							ThreadCallbackFailed = true;
 							break;
 						}
 					}
-					Assert.AreEqual("Too late, result sent", ex.Message);
+					Assert.AreEqual("Too late, result sent", callbackEx!.Message);
 				}
 				catch (Exception e)
 				{
-					Test_Thread_AssertEx = e;
+					ThreadAssertEx = e;
 				}
 				finally
 				{
-					Test_Thread_Done = true;
+					ThreadDone = true;
 				}
 			});
 
 			t.Start();
 			Thread.Sleep(1000);
 
-			while (!Test_Thread_Started)
+			while (!ThreadStarted)
 				Thread.Sleep(10);
 
-			Test_HasReturned = true;
+			HasReturned = true;
 			return "bollocks";
 		}
 	}
 
-	volatile static bool Test_HasReturned = false;
-	volatile static bool Test_Thread_Started = false;
-	volatile static bool Test_Thread_DidRun = false;
-	volatile static bool Test_Thread_Callback_Failed = false;
-	volatile static bool Test_Thread_Done = false;
-	static Exception? Test_Thread_AssertEx;
-
-
 	[TestMethod]
 	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
+[DataRow(Serializer.MemoryPack)]
 #endif
 	[DataRow(Serializer.Json)]
 	[DataRow(Serializer.MessagePack)]
 	[DataRow(Serializer.Protobuf)]
 	public async Task Delegate_callback_after_return(Serializer ser)
 	{
-		// null from last DataRow
-		Test_HasReturned = false;
-		Test_Thread_Started = false;
-		Test_Thread_DidRun = false;
-		Test_Thread_Callback_Failed = false;
-		Test_Thread_Done = false;
-		Test_Thread_AssertEx = null;
+		var service = new DelegateTest();
 
-		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var serverConfig =
+			new ServerConfig(Serializers.GetSerializer(ser))
+			{
+				CreateService = (_, _) => new(service, false)
+			};
 
 		var port = Ports.GetNext();
 		await using var server = new NativeServer(port, serverConfig);
@@ -859,26 +840,23 @@ public class RpcTests
 
 		bool wasHere = false;
 
-		var res = proxy.Test((e) =>
+		var res = proxy.Test(e =>
 		{
 			wasHere = true;
 			return e + "hi";
 		});
 
 		Assert.AreEqual("bollocks", res);
-
 		Assert.IsTrue(wasHere);
-		Assert.IsTrue(Test_HasReturned);
-		Assert.IsTrue(Test_Thread_DidRun);
+		Assert.IsTrue(service.HasReturned);
+		Assert.IsTrue(service.ThreadDidRun);
 
-		while (!Test_Thread_Done)
-		{
+		while (!service.ThreadDone)
 			Thread.Sleep(10);
-		}
 
-		var assertEx = Test_Thread_AssertEx;
+		var assertEx = service.ThreadAssertEx;
 		Assert.IsNull(assertEx, assertEx?.ToString());
-		Assert.IsTrue(Test_Thread_Callback_Failed);
+		Assert.IsTrue(service.ThreadCallbackFailed);
 	}
 
 	public interface IDelegateTest2
@@ -1584,7 +1562,7 @@ public class RpcTests
 			Assert.IsTrue(t5_called4);
 			Assert.AreEqual(44, t5ir);
 		}
-		catch (Exception e)
+		catch (Exception)
 		{
 			throw;
 	//		t5_failed = e.Message == "Only one delegate with result is supported";
