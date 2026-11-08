@@ -1,4 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+
 
   <PropertyGroup>
     <TargetFrameworks>net48;net8.0;net9.0</TargetFrameworks>
@@ -19,6 +20,8 @@
     <PackageReference Include="System.Threading.Tasks.Extensions" Condition="'$(TargetFramework)' == 'net48'" />
     <PackageReference Include="Portable.System.DateTimeOnly" Condition="'$(TargetFramework)' == 'net48'" />
     <PackageReference Include="System.Runtime.Serialization.Formatters" Condition="'$(TargetFramework)' == 'net9.0'" />
+    <PackageReference Include="Grpc.AspNetCore.Server" Condition="'$(TargetFramework)' != 'net48'" />
+    <PackageReference Include="Grpc.Net.Client" Condition="'$(TargetFramework)' != 'net48'" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,4 +36,3 @@
   </ItemGroup>
 
 </Project>
-

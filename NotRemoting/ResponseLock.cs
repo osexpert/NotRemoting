@@ -24,7 +24,12 @@ internal class ResponseLock : IDisposable
 
 		if (_resultSent)
 		{
-			_lock.ExitReadLock();
+			try
+			{
+				_lock.ExitReadLock();
+			}
+			catch (ObjectDisposedException) { }
+
 			throw new Exception("Too late, result sent");
 		}
 	}

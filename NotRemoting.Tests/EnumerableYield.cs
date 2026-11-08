@@ -293,12 +293,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task YieldTest(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 
@@ -430,12 +434,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task CancelAsyncTest(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 
@@ -471,12 +479,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task CancelAsyncTest3_notoken(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 
@@ -507,12 +519,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task Cancel4AsyncTest(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 
@@ -541,12 +557,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task CancelFromTheStart(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 
@@ -567,12 +587,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task CancelAfter2sec(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 
@@ -594,12 +618,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task AsyncExceptionLocally(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 
@@ -628,12 +656,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task AsyncCheckResultEcho(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 
@@ -658,12 +690,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task TestClientThrowsServerCatch(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 
@@ -688,12 +724,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task ReIterateShouldNotWorkClient(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 
@@ -727,12 +767,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task ReIterateShoulNotWorkServer(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 
@@ -762,12 +806,16 @@ public class EnumerableYield
 	[DataRow(Serializer.Protobuf)]
 	public async Task BothArgAndResult(Serializer ser)
 	{
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
+		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
 
-		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+		//await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IIenumera>();
 

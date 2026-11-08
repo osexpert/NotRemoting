@@ -5,7 +5,16 @@ using Grpc.Core;
 
 namespace NotRemoting.Tests.Tools;
 
-public class NativeServer : RemotingServer, IAsyncDisposable
+public abstract class TestServer : RemotingServer, IAsyncDisposable
+{
+	protected TestServer(ServerConfig config) : base(config)
+	{
+	}
+
+	public abstract ValueTask DisposeAsync();
+}
+
+public class NativeServer : TestServer
 {
 
 	Grpc.Core.Server _server;
@@ -31,7 +40,7 @@ public class NativeServer : RemotingServer, IAsyncDisposable
 
 	public bool DisposeKills = false;
 
-	public ValueTask DisposeAsync()
+	public override ValueTask DisposeAsync()
 	{
 		if (_server != null)
 			return new ValueTask(DisposeKills ? _server.KillAsync() : _server.ShutdownAsync());

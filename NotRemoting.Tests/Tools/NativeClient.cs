@@ -5,7 +5,17 @@ using Channel = Grpc.Core.Channel;
 
 namespace NotRemoting.Tests.Tools;
 
-public class NativeClient : RemotingClient, IAsyncDisposable
+
+public abstract class TestClient : RemotingClient, IAsyncDisposable
+{
+	protected TestClient(CallInvoker callInvoker, ClientConfig config) : base(callInvoker, config)
+	{
+	}
+
+	public abstract ValueTask DisposeAsync();
+}
+
+public class NativeClient : TestClient
 {
 	Channel _channel;
 
@@ -20,12 +30,14 @@ public class NativeClient : RemotingClient, IAsyncDisposable
 		return channel.CreateCallInvoker();
 	}
 
-	public ValueTask DisposeAsync()
+	public override ValueTask DisposeAsync()
 	{
 		if (_channel != null)
 			return new ValueTask(_channel.ShutdownAsync());
 		else
 			return default;
 	}
+
+
 }
 

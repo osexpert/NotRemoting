@@ -38,6 +38,7 @@ public class CallContextTests
 
 		var port = Ports.GetNext();
 		await using var server = new NativeServer(port, serverConfig);
+
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
