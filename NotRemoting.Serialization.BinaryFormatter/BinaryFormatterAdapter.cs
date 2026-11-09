@@ -53,6 +53,9 @@ public class BinaryFormatterAdapter : ISerializerAdapter, IExceptionAdapter
 			// but for some things its easier\better to change to somethign else than adding support for it here.
 			opt.Surrogates.Add(new TypeSurrogate());
 			opt.Surrogates.Add(new CultureInfoSurrogate());
+
+			opt.Surrogates.Add(new TimeOnlySurrogate());
+			opt.Surrogates.Add(new DateOnlySurrogate());
 		}
 
 		return opt;

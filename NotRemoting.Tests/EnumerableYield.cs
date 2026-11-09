@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NotRemoting.Tests.Tools;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Grpc.Core;
 
 namespace NotRemoting.Tests;
 
@@ -284,20 +285,14 @@ public class EnumerableYield
 
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task YieldTest(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task YieldTest(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
@@ -353,10 +348,14 @@ public class EnumerableYield
 
 			}, fiveSec.Token);
 		}
-		catch (TaskCanceledException)
+		catch (RpcException re) when (re.StatusCode == StatusCode.Cancelled)
 		{
 			wasC = true;
 		}
+		//catch (TaskCanceledException) when (tt == TransportType.Native)
+		//{
+		//	wasC = true;
+		//}
 
 		var td = DateTime.Now - t1;
 		//			Assert.True(td.TotalSeconds < 10);
@@ -425,20 +424,14 @@ public class EnumerableYield
 
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task CancelAsyncTest(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task CancelAsyncTest(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
@@ -470,20 +463,14 @@ public class EnumerableYield
 
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task CancelAsyncTest3_notoken(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task CancelAsyncTest3_notoken(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
@@ -510,20 +497,14 @@ public class EnumerableYield
 
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task Cancel4AsyncTest(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task Cancel4AsyncTest(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
@@ -548,20 +529,14 @@ public class EnumerableYield
 
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task CancelFromTheStart(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task CancelFromTheStart(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
@@ -574,24 +549,28 @@ public class EnumerableYield
 		ct.Cancel();
 
 
-		await Assert.ThrowsExactlyAsync<TaskCanceledException>(() => proxy.TestCancel5(ct.Token));
+		//if (tt == TransportType.Native)
+		//{
+		//	await Assert.ThrowsExactlyAsync<TaskCanceledException>(() => proxy.TestCancel5(ct.Token));
+		//}
+		//else if (tt == TransportType.Kestrel)
+		{
+			var e = await Assert.ThrowsExactlyAsync<RpcException>(() => proxy.TestCancel5(ct.Token));
+			Assert.AreEqual(StatusCode.Cancelled, e.StatusCode);
+		}
+		//else
+		//	throw new NotImplementedException();
 	}
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task CancelAfter2sec(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task CancelAfter2sec(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
@@ -602,27 +581,31 @@ public class EnumerableYield
 
 		var ct = new CancellationTokenSource(2000);
 
-		await Assert.ThrowsExactlyAsync<TaskCanceledException>(() => proxy.TestCancel6(ct.Token));
+		//if (tt == TransportType.Native)
+		//{
+		//	await Assert.ThrowsExactlyAsync<TaskCanceledException>(() => proxy.TestCancel6(ct.Token));
+		//}
+		//else if (tt == TransportType.Kestrel)
+		{
+			var e = await Assert.ThrowsExactlyAsync<RpcException>(() => proxy.TestCancel6(ct.Token));
+			Assert.AreEqual(StatusCode.Cancelled, e.StatusCode);
+		}
+		//else
+		//	throw new NotImplementedException();
 	}
 
 
 
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task AsyncExceptionLocally(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task AsyncExceptionLocally(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
@@ -647,20 +630,14 @@ public class EnumerableYield
 
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task AsyncCheckResultEcho(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task AsyncCheckResultEcho(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
@@ -681,20 +658,14 @@ public class EnumerableYield
 
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task TestClientThrowsServerCatch(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task TestClientThrowsServerCatch(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
@@ -715,20 +686,14 @@ public class EnumerableYield
 	}
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task ReIterateShouldNotWorkClient(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task ReIterateShouldNotWorkClient(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
@@ -758,20 +723,14 @@ public class EnumerableYield
 	}
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task ReIterateShoulNotWorkServer(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task ReIterateShoulNotWorkServer(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();
@@ -797,20 +756,14 @@ public class EnumerableYield
 
 
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task BothArgAndResult(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task BothArgAndResult(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = RpcTests.CreateServer(TestServerType.Native, port, serverConfig);
-		await using var client = RpcTests.CreateClient(TestServerType.Native, port, clientConfig);
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IIenumera, EnumeTest>();
 		server.Start();

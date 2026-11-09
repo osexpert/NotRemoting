@@ -137,6 +137,7 @@ public class RemotingClient : IRemotingParty
 
 		using (var call = _callInvoker.AsyncDuplexStreamingCall(DuplexCallDescriptor, null, callOpt))
 		{
+			//Exception? error = null;
 			try
 			{
 				await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
@@ -148,10 +149,25 @@ public class RemotingClient : IRemotingParty
 				}
 				throw new Exception("No result message");
 			}
+			catch (OperationCanceledException oce)
+			{
+				//error = tce;
+				throw new RpcException(new Status(StatusCode.Cancelled, oce.Message, oce));
+			}
+			//catch (Exception ex)
+			//{
+			//	//error = ex;
+			//	throw;
+			//}
 			finally
 			{
-				// send END_STREAM to server
-				await call.RequestStream.CompleteAsync().ConfigureAwait(false);
+				try
+				{
+					// send END_STREAM to server
+					await call.RequestStream.CompleteAsync().ConfigureAwait(false);
+				}
+				//catch when (error != null) { }
+				catch { }
 			}
 		}
 	}

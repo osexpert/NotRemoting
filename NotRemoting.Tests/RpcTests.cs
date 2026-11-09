@@ -10,46 +10,67 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace NotRemoting.Tests;
 
-public enum TestServerType
-
+public static class TestSerializerData
 {
+	/// <summary>
+	/// Returner alle kombinasjoner av TestServerType og Serializer for testing.
+	/// </summary>
+	public static IEnumerable<object[]> ServerSerializerData()
+	{
+		// ALLWAYS: Native testserver med alle serializere
+		yield return new object[] { TransportType.Native, Serializer.BinaryFormatter };
+		yield return new object[] { TransportType.Native, Serializer.Json };
+		yield return new object[] { TransportType.Native, Serializer.MessagePack };
+		yield return new object[] { TransportType.Native, Serializer.Protobuf };
 
-    Native,
-    Kestrel
+		// NET6.0+: MemoryPack støtte med Native server
+#if NET6_0_OR_GREATER
+		yield return new object[] { TransportType.Native, Serializer.MemoryPack };
+#endif
 
+		// NET8.0+: Kestrel testserver med alle serializere
+#if NET8_0_OR_GREATER
+		yield return new object[] { TransportType.Kestrel, Serializer.BinaryFormatter };
+		yield return new object[] { TransportType.Kestrel, Serializer.Json };
+		yield return new object[] { TransportType.Kestrel, Serializer.MessagePack };
+		yield return new object[] { TransportType.Kestrel, Serializer.Protobuf };
+#endif
+	}
+}
+
+public enum TransportType
+{
+	Native,
+	Kestrel
 }
 
 [TestClass]
-
 public class RpcTests
-
 {
-
 	//private readonly ITestOutputHelper _testOutputHelper;
 	//public RpcTests(ITestOutputHelper testOutputHelper)
 	//{
 	//	_testOutputHelper = testOutputHelper;
 	//}
-	public static dynamic CreateServer(TestServerType testServer, int port, ServerConfig serverConfig)
+	public static dynamic CreateServer(TransportType testServer, int port, ServerConfig serverConfig)
 	{
 		dynamic server;
 		switch (testServer)
 		{
-			case TestServerType.Native:
+			case TransportType.Native:
 				server = new NativeServer(port, serverConfig);
 				break;
 
 #if NET8_0_OR_GREATER
-
-			case TestServerType.Kestrel:
+			case TransportType.Kestrel:
 				server = new KestrelServer(port, serverConfig);
 				break;
-
 #endif
 
 			default:
@@ -68,77 +89,33 @@ public class RpcTests
 	//	}
 	//}
 
-	public static TestClient CreateClient(TestServerType testServer, int port, ClientConfig clientConfig)
+	public static TestClient CreateClient(TransportType testServer, int port, ClientConfig clientConfig)
 	{
-		
 		switch (testServer)
 		{
-			case TestServerType.Native:
+			case TransportType.Native:
 				return new NativeClient(port, clientConfig);
-					
-				
 
 #if NET8_0_OR_GREATER
-
-			case TestServerType.Kestrel:
+			case TransportType.Kestrel:
 				return new KestrelClient(port, clientConfig);
-
 #endif
-
 			default:
 				throw new ArgumentOutOfRangeException(nameof(testServer), testServer, null);
 		}
-		
+
 	}
 
 
 	[TestMethod]
-
-	//		[DataRow(enSerializer.BinaryFormatter)] FIXME: TimeOnly, DateOnly missing
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task TestMiscTypes(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task TestMiscTypes(TransportType testServer, Serializer ser)
 	{
-		var serverConfig =
-			new ServerConfig(Serializers.GetSerializer(ser));
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
 		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = CreateClient(testServer, port, clientConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 		var proxy = client.CreateProxy<ITestService>();
@@ -175,52 +152,10 @@ public class RpcTests
 		Assert.AreEqual(span, echo.ts);
 		Assert.IsNull(echo.nullDto);
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task TestSendBytes(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task TestSendBytes(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
@@ -234,52 +169,10 @@ public class RpcTests
 		Assert.IsTrue(Enumerable.SequenceEqual(new byte[] { 1, 2, 3, 4, 42 }, res));
 		Assert.IsTrue(Enumerable.SequenceEqual(new byte[] { 77, 99, 12, 32, 42, 66 }, outBytes));
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task TestReferences(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task TestReferences(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
@@ -317,52 +210,10 @@ public class RpcTests
 		else
 			throw new NotImplementedException();
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task ReturnNullWithLz4(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task ReturnNullWithLz4(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		serverConfig.AddCompressor(new Lz4CompressionProvider());
@@ -390,52 +241,10 @@ public class RpcTests
 		s2.Stop();
 		Assert.IsNull(result);
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task Inherited_methods_should_be_called_correctly(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task Inherited_methods_should_be_called_correctly(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
@@ -450,66 +259,10 @@ public class RpcTests
 		Assert.AreEqual("lol", result);
 		Assert.AreEqual(3, result2);
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter, false)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter, false)]
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack, false)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack, false)]
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json, false)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Json, false)]
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack, false)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack, false)]
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter, true)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter, true)]
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack, true)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack, true)]
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json, true)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Json, true)]
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack, true)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack, true)]
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf, false)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf, false)]
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf, true)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf, true)]
-#endif
-
-	public async Task Call_on_Proxy_should_be_invoked_on_remote_service(TestServerType testServer, Serializer ser, bool compress)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task Call_on_Proxy_should_be_invoked_on_remote_service(TransportType testServer, Serializer ser, bool compress = true)
 	{
 		bool remoteServiceCalled = false;
 		var testService =
@@ -574,51 +327,8 @@ public class RpcTests
 		Assert.IsTrue(remoteServiceCalled);
 	}
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption(TransportType testServer, Serializer ser)
 	{
 		bool remoteServiceCalled = false;
 		var testService =
@@ -674,52 +384,10 @@ public class RpcTests
 		clientThread.Join();
 		Assert.IsTrue(remoteServiceCalled);
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task Delegate_invoked_on_server_should_callback_client(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task Delegate_invoked_on_server_should_callback_client(TransportType testServer, Serializer ser)
 	{
 		string? argumentFromServer = null;
 		var testService = new TestService();
@@ -745,52 +413,10 @@ public class RpcTests
 		clientThread.Join();
 		Assert.AreEqual("test", argumentFromServer);
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task Events_should_NOT_work_remotly(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task Events_should_NOT_work_remotly(TransportType testServer, Serializer ser)
 	{
 		var testService = new TestService();
 		var serverConfig =
@@ -800,7 +426,7 @@ public class RpcTests
 			};
 		bool serviceEventCalled = false;
 
-		
+
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
 		await using var server = CreateServer(testServer, port, serverConfig);
@@ -817,52 +443,10 @@ public class RpcTests
 		Assert.AreEqual("Too late, result sent", ex.Message);
 		Assert.IsFalse(serviceEventCalled);
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task External_types_should_work_as_remote_service_parameters(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task External_types_should_work_as_remote_service_parameters(TransportType testServer, Serializer ser)
 	{
 		bool remoteServiceCalled = false;
 		DataClass? parameterValue = null;
@@ -880,7 +464,7 @@ public class RpcTests
 			{
 				CreateService = (_, _) => new(testService, false)
 			};
-		
+
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
 		await using var server = CreateServer(testServer, port, serverConfig);
@@ -945,52 +529,10 @@ public class RpcTests
 		}
 	}
 	#endregion
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task Generic_methods_should_be_called_correctly(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task Generic_methods_should_be_called_correctly(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
@@ -1039,52 +581,10 @@ public class RpcTests
 		}
 	}
 	#endregion
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task Enum_arguments_should_be_passed_correctly(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task Enum_arguments_should_be_passed_correctly(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
@@ -1119,29 +619,8 @@ public class RpcTests
 	}
 
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-#endif
-#if NET6_0_OR_GREATER
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-#endif
-#endif
-	[DataRow(TestServerType.Native, Serializer.Json)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-#endif
-	public async Task Ref_param_should_fail(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task Ref_param_should_fail(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
@@ -1214,36 +693,14 @@ public class RpcTests
 	}
 
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-#endif
-#if NET6_0_OR_GREATER
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-#endif
-#endif
-	[DataRow(TestServerType.Native, Serializer.Json)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-#endif
-	public async Task Delegate_callback_after_return(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task Delegate_callback_after_return(TransportType testServer, Serializer ser)
 	{
 		var service = new DelegateTest();
-		var serverConfig =
-			new ServerConfig(Serializers.GetSerializer(ser))
-			{
-				CreateService = (_, _) => new(service, false)
-			};
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser))
+		{
+			CreateService = (_, _) => new(service, false)
+		};
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
 		await using var server = CreateServer(testServer, port, serverConfig);
@@ -1450,52 +907,10 @@ public class RpcTests
 			return "���";
 		}
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task MultipleDelegateCallback(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task MultipleDelegateCallback(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
@@ -1535,7 +950,7 @@ public class RpcTests
 		Assert.IsTrue(wasHere2);
 		Assert.IsTrue(wasHere3);
 
-//		Assert.AreEqual("Only one delegate with result is supported", ex1!.Message);
+		//		Assert.AreEqual("Only one delegate with result is supported", ex1!.Message);
 
 		wasHere = false;
 		wasHere2 = false;
@@ -1788,52 +1203,10 @@ public class RpcTests
 	static Exception? throw7Ex;
 	static Exception? throw8Ex;
 	static Exception? throw9Ex;
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-
-#endif
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task DoVarArgTest(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task DoVarArgTest(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
@@ -1965,10 +1338,10 @@ public class RpcTests
 		catch (Exception)
 		{
 			throw;
-	//		t5_failed = e.Message == "Only one delegate with result is supported";
+			//		t5_failed = e.Message == "Only one delegate with result is supported";
 		}
 
-//		Assert.IsTrue(t5_failed);
+		//		Assert.IsTrue(t5_failed);
 
 		{
 			bool t6_called1 = false;
@@ -2054,47 +1427,14 @@ public class RpcTests
 		// I randomly get  System.Exception: Shutdown check: Detected 1 pending batch completions.
 		//server.DisposeKills = true;
 	}
+
 	[TestMethod]
-	//[DataRow(enSerializer.BinaryFormatter)] does nor work, complain the generated iterator class is not serializable
-
-#if NET6_0_OR_GREATER
-
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-
-#endif
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Json)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-
-#endif
-
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-
-#if NET8_0_OR_GREATER
-
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-
-#endif
-
-	public async Task IEnumerableYield(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task IEnumerableYield(TransportType testServer, Serializer ser)
 	{
+		if (ser == Serializer.BinaryFormatter)
+			return;
+
 		string? argumentFromServer = null;
 		var testService = new TestService();
 
@@ -2119,21 +1459,14 @@ public class RpcTests
 		clientThread.Join();
 		Assert.AreEqual("a,b", argumentFromServer);
 	}
-
 }
 
 [Serializable]
-
 [MemoryPackable]
-
 [MessagePackObject(keyAsPropertyName: true)]
-
 [ProtoContract]
-
 public partial class S1
-
 {
-
 	[ProtoMember(1)]
 	public string? s1;
 	public S1(string s)
@@ -2144,21 +1477,14 @@ public partial class S1
 	public S1()
 	{
 	}
-
 }
 
 [Serializable]
-
 [MemoryPackable]
-
 [MessagePackObject(keyAsPropertyName: true)]
-
 [ProtoContract]
-
 public partial class S2
-
 {
-
 	[ProtoMember(1)]
 	public string? s2;
 	public S2(string s)
@@ -2169,21 +1495,14 @@ public partial class S2
 	public S2()
 	{
 	}
-
 }
 
 [Serializable]
-
 [MemoryPackable]
-
 [MessagePackObject(keyAsPropertyName: true)]
-
 [ProtoContract]
-
 public partial class S3
-
 {
-
 	[ProtoMember(1)]
 	public string? s3;
 	public S3(string s)
@@ -2194,21 +1513,14 @@ public partial class S3
 	public S3()
 	{
 	}
-
 }
 
 [Serializable]
-
 [MemoryPackable]
-
 [MessagePackObject(keyAsPropertyName: true)]
-
 [ProtoContract]
-
 public partial class R1
-
 {
-
 	[ProtoMember(1)]
 	public string? r1;
 	public R1(string r)
@@ -2223,17 +1535,11 @@ public partial class R1
 }
 
 [Serializable]
-
 [MemoryPackable]
-
 [MessagePackObject(keyAsPropertyName: true)]
-
 [ProtoContract]
-
 public partial class R2
-
 {
-
 	[ProtoMember(1)]
 	public string? r2;
 	public R2(string r)
@@ -2244,21 +1550,14 @@ public partial class R2
 	public R2()
 	{
 	}
-
 }
 
 [Serializable]
-
 [MemoryPackable]
-
 [MessagePackObject(keyAsPropertyName: true)]
-
 [ProtoContract]
-
 public partial class R3
-
 {
-
 	[ProtoMember(1)]
 	public string? r3;
 	[MemoryPackConstructor]
@@ -2269,6 +1568,4 @@ public partial class R3
 	{
 		r3 = r;
 	}
-
 }
-

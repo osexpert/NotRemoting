@@ -14,5 +14,11 @@
     <ProjectReference Include="..\NotRemoting\NotRemoting.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Portable.System.DateTimeOnly" />
+  </ItemGroup>
+  
+  
+  
 </Project>
 

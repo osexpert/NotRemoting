@@ -704,13 +704,17 @@ public class RemotingServer : IRemotingParty
 			// Wait for END_STREAM from client to be processed
 			await context.WaitForCancellationAsync().ConfigureAwait(false);
 		}
+		catch (OperationCanceledException oce)
+		{
+			context.Status = new Status(StatusCode.Cancelled, oce.Message, oce);
+		}
 		catch (RpcException e)
 		{
 			context.Status = e.Status;
 		}
 		catch (Exception e)
 		{
-			context.Status = new Status(StatusCode.Unknown, e.ToString());
+			context.Status = new Status(StatusCode.Unknown, e.Message, e);
 		}
 	}
 

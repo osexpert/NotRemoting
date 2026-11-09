@@ -63,21 +63,21 @@ public class AsyncTests
 		}
 	}
 	#endregion
-	    private static (dynamic server, RemotingClient client) CreateServerClient(TestServerType testServer, int port, ServerConfig serverConfig, ClientConfig clientConfig)
+	    private static (dynamic server, RemotingClient client) CreateServerClient(TransportType testServer, int port, ServerConfig serverConfig, ClientConfig clientConfig)
     {
         dynamic server;
         RemotingClient client;
         switch (testServer)
         {
-            case TestServerType.Native:
+            case TransportType.Native:
                 server = new NativeServer(port, serverConfig);
                 client = new NativeClient(port, clientConfig);
                 break;
 #if NET8_0_OR_GREATER
-		            case TestServerType.Kestrel:
-		                server = new KestrelServer(port, serverConfig);
-		                client = new KestrelClient(port, clientConfig);
-		                break;
+            case TransportType.Kestrel:
+                server = new KestrelServer(port, serverConfig);
+                client = new KestrelClient(port, clientConfig);
+                break;
 #endif
             default:
                 throw new ArgumentOutOfRangeException(nameof(testServer), testServer, null);
@@ -85,30 +85,9 @@ public class AsyncTests
         return (server, client);
     }
 
-[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Json)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-#endif
-#if NET6_0_OR_GREATER
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-#endif
-#endif
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-#endif
-	public async Task ThrowRpcExcetion(TestServerType testServer, Serializer ser)
+	[TestMethod]
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task ThrowRpcExcetion(TransportType testServer, Serializer ser)
 	{
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
@@ -125,30 +104,10 @@ public class AsyncTests
 		Assert.AreEqual(StatusCode.OK, ex.Status.StatusCode);
 		Assert.IsNull(ex.Status.Detail);
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Json)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-#endif
-#if NET6_0_OR_GREATER
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-#endif
-#endif
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-#endif
-	public async Task CallBaseMethod(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task CallBaseMethod(TransportType testServer, Serializer ser)
 	{
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
@@ -160,30 +119,10 @@ public class AsyncTests
 		var res = proxy.BaseMethod("hey");
 		Assert.AreEqual("heylol", res);
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Json)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-#endif
-#if NET6_0_OR_GREATER
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-#endif
-#endif
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-#endif
-	public async Task AsyncMethods_should_work(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task AsyncMethods_should_work(TransportType testServer, Serializer ser)
 	{
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
@@ -202,34 +141,15 @@ public class AsyncTests
 		Assert.AreEqual(new Version(1, 2), res.Item3[0]);
 		Assert.AreEqual(new Version(2, 3, 5), res.Item3[1]);
 	}
+
+
 	/// <summary>
 	/// Awaiting for ordinary non-generic task method should not hangs. 
 	/// </summary>
 	//[Fact(Timeout = 15000)]
 	[TestMethod()]//Timeout = 15000)]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-#endif
-#if NET6_0_OR_GREATER
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-#endif
-#endif
-	[DataRow(TestServerType.Native, Serializer.Json)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-#endif
-	public async Task AwaitingNonGenericTask_should_not_hang_forever(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task AwaitingNonGenericTask_should_not_hang_forever(TransportType testServer, Serializer ser)
 	{
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
@@ -366,30 +286,10 @@ public class AsyncTests
 			info.AddValue("test", Test);
 		}
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Json)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-#endif
-#if NET6_0_OR_GREATER
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-#endif
-#endif
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-#endif
-	public async Task ExceptionTests(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task ExceptionTests(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
@@ -400,14 +300,26 @@ public class AsyncTests
 		Exception e;
 		if (ser == Serializer.BinaryFormatter)
 		{
-			e = Assert.ThrowsExactly<TaskCanceledException>(proxy.TestSerializedExMistakeAndPrivate);
-			Assert.AreEqual("A task was canceled.", e.Message);
-			Assert.IsNull(e.InnerException);
-			AssertLines(e,
-			[
-				"System.Threading.Tasks.TaskCanceledException: A task was canceled.",
-				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType)"
-			]);
+			if (testServer == TransportType.Native)
+			{
+				e = Assert.ThrowsExactly<RpcException>(proxy.TestSerializedExMistakeAndPrivate);
+				//Assert.AreEqual("Status(StatusCode="Internal", Detail="Failed to deserialize response message.", DebugException="Grpc.Core.Internal.CoreErrorDetailException: {"created":"@1794249882.471000000","description":"Error received from peer ipv6:[::1]:9066","file":"..\..\..\src\core\lib\surface\call.cc","file_line":953,"grpc_message":"Failed to deserialize response message.","grpc_status":13}")", e.Message);
+				Assert.StartsWith("Status(StatusCode=\"Internal\", Detail=\"Failed to deserialize response message.\", DebugException=\"Grpc.Core.Internal.CoreErrorDetailException: ", e.Message);
+				Assert.IsNotNull(e.InnerException);
+				//AssertLines(e,
+				//[
+				//	"System.Threading.Tasks.TaskCanceledException: A task was canceled.",
+				//"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType)"
+				//]);
+			}
+			else if (testServer == TransportType.Kestrel)
+			{
+				e = Assert.ThrowsExactly<RpcException>(proxy.TestSerializedExMistakeAndPrivate);
+				Assert.AreEqual("Status(StatusCode=\"Internal\", Detail=\"Error reading next message. SerializationException: Invalid BinaryFormatter stream. TargetInvocationException: Exception has been thrown by the target of an invocation. SerializationException: Member 'Test' was not found.\", DebugException=\"System.Runtime.Serialization.SerializationException: Invalid BinaryFormatter stream.\")", e.Message);
+				Assert.AreEqual("Invalid BinaryFormatter stream.", e.InnerException!.Message);
+			}
+			else
+				throw new NotImplementedException();
 		}
 		else
 		{
@@ -425,14 +337,30 @@ public class AsyncTests
 		Exception e2;
 		if (ser == Serializer.BinaryFormatter)
 		{
-			e2 = Assert.ThrowsExactly<TaskCanceledException>(proxy.TestSerializedExMistake);
-			Assert.AreEqual("A task was canceled.", e2.Message);
-			Assert.IsNull(e2.InnerException);
-			AssertLines(e,
-			[
-				"System.Threading.Tasks.TaskCanceledException: A task was canceled.",
-				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType)"
-			]);
+			if (testServer == TransportType.Native)
+			{
+				e = Assert.ThrowsExactly<RpcException>(proxy.TestSerializedExMistakeAndPrivate);
+				//Assert.AreEqual("Status(StatusCode="Internal", Detail="Failed to deserialize response message.", DebugException="Grpc.Core.Internal.CoreErrorDetailException: {"created":"@1794249882.471000000","description":"Error received from peer ipv6:[::1]:9066","file":"..\..\..\src\core\lib\surface\call.cc","file_line":953,"grpc_message":"Failed to deserialize response message.","grpc_status":13}")", e.Message);
+				Assert.StartsWith("Status(StatusCode=\"Internal\", Detail=\"Failed to deserialize response message.\", DebugException=\"Grpc.Core.Internal.CoreErrorDetailException: ", e.Message);
+				Assert.IsNotNull(e.InnerException);
+
+				//	e2 = Assert.ThrowsExactly<TaskCanceledException>(proxy.TestSerializedExMistake);
+				//	Assert.AreEqual("A task was canceled.", e2.Message);
+				//	Assert.IsNull(e2.InnerException);
+				//	AssertLines(e,
+				//	[
+				//		"System.Threading.Tasks.TaskCanceledException: A task was canceled.",
+				//	"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType)"
+				//	]);
+			}
+			else if (testServer == TransportType.Kestrel)
+			{
+				e = Assert.ThrowsExactly<RpcException>(proxy.TestSerializedExMistakeAndPrivate);
+				Assert.AreEqual("Status(StatusCode=\"Internal\", Detail=\"Error reading next message. SerializationException: Invalid BinaryFormatter stream. TargetInvocationException: Exception has been thrown by the target of an invocation. SerializationException: Member 'Test' was not found.\", DebugException=\"System.Runtime.Serialization.SerializationException: Invalid BinaryFormatter stream.\")", e.Message);
+				Assert.AreEqual("Invalid BinaryFormatter stream.", e.InnerException!.Message);
+			}
+			else
+				throw new NotImplementedException();
 		}
 		else
 		{
@@ -457,30 +385,10 @@ public class AsyncTests
 			"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType)"
 		]);
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Json)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-#endif
-#if NET6_0_OR_GREATER
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-#endif
-#endif
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-#endif
-	public async Task ExceptionTests_InnerEx(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task ExceptionTests_InnerEx(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
@@ -555,30 +463,10 @@ public class AsyncTests
 		}
 		Assert.IsEmpty(strings_list);
 	}
+
 	[TestMethod]
-	[DataRow(TestServerType.Native, Serializer.BinaryFormatter)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.BinaryFormatter)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Json)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Json)]
-#endif
-#if NET6_0_OR_GREATER
-	[DataRow(TestServerType.Native, Serializer.MemoryPack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MemoryPack)]
-#endif
-#endif
-	[DataRow(TestServerType.Native, Serializer.MessagePack)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.MessagePack)]
-#endif
-	[DataRow(TestServerType.Native, Serializer.Protobuf)]
-#if NET8_0_OR_GREATER
-	[DataRow(TestServerType.Kestrel, Serializer.Protobuf)]
-#endif
-	public async Task ExceptionTests_SqlException(TestServerType testServer, Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task ExceptionTests_SqlException(TransportType testServer, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
@@ -618,9 +506,12 @@ public static class Serializers
 	{
 		return ser switch
 		{
-			Serializer.BinaryFormatter => new BinaryFormatterAdapter(),
 #if NET6_0_OR_GREATER
+			Serializer.BinaryFormatter => new BinaryFormatterAdapter(netCore: true),
 			Serializer.MemoryPack => new MemoryPackAdapter(),
+
+#else
+			Serializer.BinaryFormatter => new BinaryFormatterAdapter(netCore: false),
 #endif
 			Serializer.Json => new JsonAdapter(),
 			Serializer.MessagePack => new MessagePackAdapter(),

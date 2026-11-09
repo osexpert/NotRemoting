@@ -9,14 +9,8 @@ namespace NotRemoting.Tests;
 public class CallContextTests
 {
 	[TestMethod]
-	[DataRow(Serializer.BinaryFormatter)]
-#if NET6_0_OR_GREATER
-	[DataRow(Serializer.MemoryPack)]
-#endif
-	[DataRow(Serializer.Json)]
-	[DataRow(Serializer.MessagePack)]
-	[DataRow(Serializer.Protobuf)]
-	public async Task CallContext_should_flow_from_client_to_server_and_back(Serializer ser)
+	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
+	public async Task CallContext_should_flow_from_client_to_server_and_back(TransportType serverType, Serializer ser)
 	{
 		var testService =
 			new TestService
@@ -37,7 +31,7 @@ public class CallContextTests
 			};
 
 		var port = Ports.GetNext();
-		await using var server = new NativeServer(port, serverConfig);
+		await using var server = RpcTests.CreateServer(serverType, port, serverConfig);
 
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
@@ -57,7 +51,7 @@ public class CallContextTests
 					CallContext.SetValue("test", "CallContext");
 					Assert.AreEqual("CallContext", CallContext.GetValue<string>("test"));
 
-					await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+					await using var client = RpcTests.CreateClient(serverType, port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 					var localCallContextValueBeforeRpc = CallContext.GetValue<string>("test");
 
