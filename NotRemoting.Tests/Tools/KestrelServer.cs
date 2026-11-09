@@ -69,7 +69,7 @@ public class KestrelServer : TestServer
 
     public override ValueTask DisposeAsync()
     {
-        return default;
+		return _app?.DisposeAsync() ?? default;
     }
 }
 #endif
