@@ -48,7 +48,9 @@ public class KestrelServer : TestServer
 
     public void Start()
     {
-        var builder = WebApplication.CreateBuilder();
+		Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "true");
+
+		var builder = WebApplication.CreateBuilder();
         builder.Services.AddGrpc(o => o.IgnoreUnknownServices = true);
         builder.Services.Configure<RouteOptions>(c => c.SuppressCheckForUnhandledSecurityMetadata = true);
         builder.Services.AddSingleton<KestrelRemotingService>();
