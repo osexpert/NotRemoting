@@ -63,36 +63,18 @@ public class AsyncTests
 		}
 	}
 	#endregion
-	    private static (dynamic server, RemotingClient client) CreateServerClient(TransportType testServer, int port, ServerConfig serverConfig, ClientConfig clientConfig)
-    {
-        dynamic server;
-        RemotingClient client;
-        switch (testServer)
-        {
-            case TransportType.Native:
-                server = new NativeServer(port, serverConfig);
-                client = new NativeClient(port, clientConfig);
-                break;
-#if NET8_0_OR_GREATER
-            case TransportType.Kestrel:
-                server = new KestrelServer(port, serverConfig);
-                client = new KestrelClient(port, clientConfig);
-                break;
-#endif
-            default:
-                throw new ArgumentOutOfRangeException(nameof(testServer), testServer, null);
-        }
-        return (server, client);
-    }
+	
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task ThrowRpcExcetion(TransportType testServer, Serializer ser)
+	public async Task ThrowRpcExcetion(TransportType tt, Serializer ser)
 	{
-		var serverConfig =
-			new ServerConfig(Serializers.GetSerializer(ser));
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		var (server, client) = CreateServerClient(testServer, port, serverConfig, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
+
 		server.RegisterService<IAsyncService, AsyncService>();
 		server.Start();
 		var proxy = client.CreateProxy<IAsyncService>();
@@ -107,12 +89,14 @@ public class AsyncTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task CallBaseMethod(TransportType testServer, Serializer ser)
+	public async Task CallBaseMethod(TransportType tt, Serializer ser)
 	{
-		var serverConfig =
-			new ServerConfig(Serializers.GetSerializer(ser));
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		var (server, client) = CreateServerClient(testServer, port, serverConfig, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
+
 		server.RegisterService<IAsyncService, AsyncService>();
 		server.Start();
 		var proxy = client.CreateProxy<IAsyncService>();
@@ -122,12 +106,14 @@ public class AsyncTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task AsyncMethods_should_work(TransportType testServer, Serializer ser)
+	public async Task AsyncMethods_should_work(TransportType tt, Serializer ser)
 	{
-		var serverConfig =
-			new ServerConfig(Serializers.GetSerializer(ser));
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		var (server, client) = CreateServerClient(testServer, port, serverConfig, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
+
 		server.RegisterService<IAsyncService, AsyncService>();
 		server.Start();
 		var proxy = client.CreateProxy<IAsyncService>();
@@ -149,12 +135,14 @@ public class AsyncTests
 	//[Fact(Timeout = 15000)]
 	[TestMethod()]//Timeout = 15000)]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task AwaitingNonGenericTask_should_not_hang_forever(TransportType testServer, Serializer ser)
+	public async Task AwaitingNonGenericTask_should_not_hang_forever(TransportType tt, Serializer ser)
 	{
-		var serverConfig =
-			new ServerConfig(Serializers.GetSerializer(ser));
+		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		var (server, client) = CreateServerClient(testServer, port, serverConfig, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
+
 		server.RegisterService<IAsyncService, AsyncService>();
 		server.Start();
 		var proxy = client.CreateProxy<IAsyncService>();
@@ -289,18 +277,21 @@ public class AsyncTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task ExceptionTests(TransportType testServer, Serializer ser)
+	public async Task ExceptionTests(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		var (server, client) = CreateServerClient(testServer, port, serverConfig, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
+
 		server.RegisterService<IExceptionTest, ExceptionTest>();
 		server.Start();
 		var proxy = client.CreateProxy<IExceptionTest>();
 		Exception e;
 		if (ser == Serializer.BinaryFormatter)
 		{
-			if (testServer == TransportType.Native)
+			if (tt == TransportType.Native)
 			{
 				e = Assert.ThrowsExactly<RpcException>(proxy.TestSerializedExMistakeAndPrivate);
 				//Assert.AreEqual("Status(StatusCode="Internal", Detail="Failed to deserialize response message.", DebugException="Grpc.Core.Internal.CoreErrorDetailException: {"created":"@1794249882.471000000","description":"Error received from peer ipv6:[::1]:9066","file":"..\..\..\src\core\lib\surface\call.cc","file_line":953,"grpc_message":"Failed to deserialize response message.","grpc_status":13}")", e.Message);
@@ -312,7 +303,7 @@ public class AsyncTests
 				//"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType)"
 				//]);
 			}
-			else if (testServer == TransportType.Kestrel)
+			else if (tt == TransportType.Kestrel)
 			{
 				e = Assert.ThrowsExactly<RpcException>(proxy.TestSerializedExMistakeAndPrivate);
 				Assert.AreEqual("Status(StatusCode=\"Internal\", Detail=\"Error reading next message. SerializationException: Invalid BinaryFormatter stream. TargetInvocationException: Exception has been thrown by the target of an invocation. SerializationException: Member 'Test' was not found.\", DebugException=\"System.Runtime.Serialization.SerializationException: Invalid BinaryFormatter stream.\")", e.Message);
@@ -337,7 +328,7 @@ public class AsyncTests
 		Exception e2;
 		if (ser == Serializer.BinaryFormatter)
 		{
-			if (testServer == TransportType.Native)
+			if (tt == TransportType.Native)
 			{
 				e = Assert.ThrowsExactly<RpcException>(proxy.TestSerializedExMistakeAndPrivate);
 				//Assert.AreEqual("Status(StatusCode="Internal", Detail="Failed to deserialize response message.", DebugException="Grpc.Core.Internal.CoreErrorDetailException: {"created":"@1794249882.471000000","description":"Error received from peer ipv6:[::1]:9066","file":"..\..\..\src\core\lib\surface\call.cc","file_line":953,"grpc_message":"Failed to deserialize response message.","grpc_status":13}")", e.Message);
@@ -353,7 +344,7 @@ public class AsyncTests
 				//	"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType)"
 				//	]);
 			}
-			else if (testServer == TransportType.Kestrel)
+			else if (tt == TransportType.Kestrel)
 			{
 				e = Assert.ThrowsExactly<RpcException>(proxy.TestSerializedExMistakeAndPrivate);
 				Assert.AreEqual("Status(StatusCode=\"Internal\", Detail=\"Error reading next message. SerializationException: Invalid BinaryFormatter stream. TargetInvocationException: Exception has been thrown by the target of an invocation. SerializationException: Member 'Test' was not found.\", DebugException=\"System.Runtime.Serialization.SerializationException: Invalid BinaryFormatter stream.\")", e.Message);
@@ -388,11 +379,14 @@ public class AsyncTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task ExceptionTests_InnerEx(TransportType testServer, Serializer ser)
+	public async Task ExceptionTests_InnerEx(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		var (server, client) = CreateServerClient(testServer, port, serverConfig, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
+
 		server.RegisterService<IExceptionTest, ExceptionTest>();
 		server.Start();
 		var proxy = client.CreateProxy<IExceptionTest>();
@@ -466,11 +460,14 @@ public class AsyncTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task ExceptionTests_SqlException(TransportType testServer, Serializer ser)
+	public async Task ExceptionTests_SqlException(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
+		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		var (server, client) = CreateServerClient(testServer, port, serverConfig, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var server = RpcTests.CreateServer(tt, port, serverConfig);
+		await using var client = RpcTests.CreateClient(tt, port, clientConfig);
+
 		server.RegisterService<IExceptionTest, ExceptionTest>();
 		server.Start();
 		var proxy = client.CreateProxy<IExceptionTest>();

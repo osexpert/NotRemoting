@@ -58,10 +58,10 @@ public class RpcTests
 	//{
 	//	_testOutputHelper = testOutputHelper;
 	//}
-	public static dynamic CreateServer(TransportType testServer, int port, ServerConfig serverConfig)
+	public static dynamic CreateServer(TransportType tt, int port, ServerConfig serverConfig)
 	{
 		dynamic server;
-		switch (testServer)
+		switch (tt)
 		{
 			case TransportType.Native:
 				server = new NativeServer(port, serverConfig);
@@ -74,7 +74,7 @@ public class RpcTests
 #endif
 
 			default:
-				throw new ArgumentOutOfRangeException(nameof(testServer), testServer, null);
+				throw new ArgumentOutOfRangeException(nameof(tt), tt, null);
 		}
 		return server;
 	}
@@ -89,9 +89,9 @@ public class RpcTests
 	//	}
 	//}
 
-	public static TestClient CreateClient(TransportType testServer, int port, ClientConfig clientConfig)
+	public static TestClient CreateClient(TransportType tt, int port, ClientConfig clientConfig)
 	{
-		switch (testServer)
+		switch (tt)
 		{
 			case TransportType.Native:
 				return new NativeClient(port, clientConfig);
@@ -101,7 +101,7 @@ public class RpcTests
 				return new KestrelClient(port, clientConfig);
 #endif
 			default:
-				throw new ArgumentOutOfRangeException(nameof(testServer), testServer, null);
+				throw new ArgumentOutOfRangeException(nameof(tt), tt, null);
 		}
 
 	}
@@ -109,13 +109,13 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task TestMiscTypes(TransportType testServer, Serializer ser)
+	public async Task TestMiscTypes(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 		var proxy = client.CreateProxy<ITestService>();
@@ -155,13 +155,13 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task TestSendBytes(TransportType testServer, Serializer ser)
+	public async Task TestSendBytes(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 		var proxy = client.CreateProxy<ITestService>();
@@ -172,13 +172,13 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task TestReferences(TransportType testServer, Serializer ser)
+	public async Task TestReferences(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
@@ -213,14 +213,14 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task ReturnNullWithLz4(TransportType testServer, Serializer ser)
+	public async Task ReturnNullWithLz4(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		serverConfig.AddCompressor(new Lz4CompressionProvider());
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
@@ -244,13 +244,13 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task Inherited_methods_should_be_called_correctly(TransportType testServer, Serializer ser)
+	public async Task Inherited_methods_should_be_called_correctly(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 		var proxy = client.CreateProxy<ITestService>();
@@ -262,7 +262,7 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task Call_on_Proxy_should_be_invoked_on_remote_service(TransportType testServer, Serializer ser, bool compress = true)
+	public async Task Call_on_Proxy_should_be_invoked_on_remote_service(TransportType tt, Serializer ser, bool compress = true)
 	{
 		bool remoteServiceCalled = false;
 		var testService =
@@ -284,8 +284,8 @@ public class RpcTests
 
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.Start();
 		server.RegisterService<ITestService, TestService>();
@@ -328,7 +328,7 @@ public class RpcTests
 	}
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption(TransportType testServer, Serializer ser)
+	public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption(TransportType tt, Serializer ser)
 	{
 		bool remoteServiceCalled = false;
 		var testService =
@@ -348,8 +348,8 @@ public class RpcTests
 
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
@@ -387,7 +387,7 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task Delegate_invoked_on_server_should_callback_client(TransportType testServer, Serializer ser)
+	public async Task Delegate_invoked_on_server_should_callback_client(TransportType tt, Serializer ser)
 	{
 		string? argumentFromServer = null;
 		var testService = new TestService();
@@ -395,8 +395,8 @@ public class RpcTests
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
@@ -416,7 +416,7 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task Events_should_NOT_work_remotly(TransportType testServer, Serializer ser)
+	public async Task Events_should_NOT_work_remotly(TransportType tt, Serializer ser)
 	{
 		var testService = new TestService();
 		var serverConfig =
@@ -429,8 +429,8 @@ public class RpcTests
 
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
@@ -446,7 +446,7 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task External_types_should_work_as_remote_service_parameters(TransportType testServer, Serializer ser)
+	public async Task External_types_should_work_as_remote_service_parameters(TransportType tt, Serializer ser)
 	{
 		bool remoteServiceCalled = false;
 		DataClass? parameterValue = null;
@@ -467,8 +467,8 @@ public class RpcTests
 
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
@@ -532,13 +532,13 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task Generic_methods_should_be_called_correctly(TransportType testServer, Serializer ser)
+	public async Task Generic_methods_should_be_called_correctly(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IGenericEchoService, GenericEchoService>();
 		server.Start();
@@ -584,13 +584,13 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task Enum_arguments_should_be_passed_correctly(TransportType testServer, Serializer ser)
+	public async Task Enum_arguments_should_be_passed_correctly(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IEnumTestService, EnumTestService>();
 		server.Start();
@@ -620,13 +620,13 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task Ref_param_should_fail(TransportType testServer, Serializer ser)
+	public async Task Ref_param_should_fail(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 		server.RegisterService<IRefTestService, RefTestService>();
 		server.Start();
 		var proxy = client.CreateProxy<IRefTestService>();
@@ -694,7 +694,7 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task Delegate_callback_after_return(TransportType testServer, Serializer ser)
+	public async Task Delegate_callback_after_return(TransportType tt, Serializer ser)
 	{
 		var service = new DelegateTest();
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser))
@@ -703,8 +703,8 @@ public class RpcTests
 		};
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 		server.RegisterService<IDelegateTest, DelegateTest>();
 		server.Start();
 		var proxy = client.CreateProxy<IDelegateTest>();
@@ -910,13 +910,13 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task MultipleDelegateCallback(TransportType testServer, Serializer ser)
+	public async Task MultipleDelegateCallback(TransportType tt, Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IDelegateTest2, DelegateTest2>();
 		server.Start();
@@ -1206,13 +1206,23 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task DoVarArgTest(TransportType testServer, Serializer ser)
+	public async Task DoVarArgTest(TransportType tt, Serializer ser)
 	{
+		throw1Ex = null;
+		throw2Ex = null;
+		throw3Ex = null;
+		throw4Ex = null;
+		throw5Ex = null;
+		throw6Ex = null;
+		throw7Ex = null;
+		throw8Ex = null;
+		throw9Ex = null;
+
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<IVarArgTest, VarArgTest>();
 		server.Start();
@@ -1430,7 +1440,7 @@ public class RpcTests
 
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
-	public async Task IEnumerableYield(TransportType testServer, Serializer ser)
+	public async Task IEnumerableYield(TransportType tt, Serializer ser)
 	{
 		if (ser == Serializer.BinaryFormatter)
 			return;
@@ -1441,8 +1451,8 @@ public class RpcTests
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 		var clientConfig = new ClientConfig(Serializers.GetSerializer(ser));
 		var port = Ports.GetNext();
-		await using var server = CreateServer(testServer, port, serverConfig);
-		await using var client = CreateClient(testServer, port, clientConfig);
+		await using var server = CreateServer(tt, port, serverConfig);
+		await using var client = CreateClient(tt, port, clientConfig);
 
 		server.RegisterService<ITestService, TestService>();
 		server.Start();

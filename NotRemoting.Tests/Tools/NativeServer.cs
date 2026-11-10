@@ -38,7 +38,7 @@ public class NativeServer : TestServer
 		_server.Ports.Add("0.0.0.0", port, ServerCredentials.Insecure);
 	}
 
-	public bool DisposeKills = false;
+	private bool DisposeKills = true;
 
 	public override ValueTask DisposeAsync()
 	{
