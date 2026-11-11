@@ -1,4 +1,9 @@
-## 0.0.6 (next)
+## 0.0.7
+* Make exception emission under Grpc.Core more similar to grpc-dotnet/Kestrel
+* Support DateOnly/TimeOnly with BinaryFormatter
+* ResponseLock: add missing ExitReadLock
+
+## 0.0.6
 * Fix ENHANCE_YOUR_CALM when mixing grpc-core and grpc-dotnet
 * Fix stream errors when client send END_STRAM much later than the server (now the server wait for client to send END_STREAM first)
 * Rename to NotRemoting
