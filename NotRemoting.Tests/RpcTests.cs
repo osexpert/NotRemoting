@@ -326,6 +326,7 @@ public class RpcTests
 		clientThread.Join();
 		Assert.IsTrue(remoteServiceCalled);
 	}
+
 	[TestMethod]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
 	public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption(TransportType tt, Serializer ser)
@@ -993,6 +994,7 @@ public class RpcTests
 		Assert.IsTrue(wasHere2);
 		Assert.IsTrue(wasHere3);
 	}
+
 	public interface IVarArgTest
 	{
 		int[] Test0(bool isProtobuf, int a, params int[] b);
@@ -1012,6 +1014,7 @@ public class RpcTests
 		Task Throw8(Func<int, ValueTask> a);
 		Task Throw9(Func<int, ValueTask<int>> a);
 	}
+
 	public class VarArgTest : IVarArgTest
 	{
 		public int[] Test0(bool isProtobuf, int a, params int[] b)
@@ -1205,6 +1208,7 @@ public class RpcTests
 	static Exception? throw9Ex;
 
 	[TestMethod]
+	[DoNotParallelize]
 	[DynamicData("ServerSerializerData", typeof(TestSerializerData))]
 	public async Task DoVarArgTest(TransportType tt, Serializer ser)
 	{
