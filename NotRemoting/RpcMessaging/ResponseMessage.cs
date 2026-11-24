@@ -79,7 +79,7 @@ public class ResponseMessage : ISerializable
 		else if (ResponseType == ResponseType.AsyncEnumReturnResult)
 			AsyncEnumReturnResult = new AsyncEnumReturnResultMessage(r);
 		else
-			throw new NotImplementedException();
+			throw new NotImplementedException($"ResponseType: {ResponseType}");
 	}
 
 	public void Deserialize(Stack<object?> st)
@@ -93,7 +93,7 @@ public class ResponseMessage : ISerializable
 		else if (ResponseType == ResponseType.AsyncEnumReturnResult)
 			AsyncEnumReturnResult.Deserialize(st);
 		else
-			throw new NotImplementedException();
+			throw new NotImplementedException($"ResponseType: {ResponseType}");
 	}
 
 	public void Serialize(BinaryWriterEx w, Stack<object?> st)
@@ -109,7 +109,7 @@ public class ResponseMessage : ISerializable
 		else if (ResponseType == ResponseType.AsyncEnumReturnResult)
 			AsyncEnumReturnResult.Serialize(w, st);
 		else
-			throw new NotImplementedException();
+			throw new NotImplementedException($"ResponseType: {ResponseType}");
 	}
 
 	internal static ResponseMessage Deserialize(IRemotingParty r, Stream s, ResponseType mType,
@@ -129,7 +129,7 @@ public class ResponseMessage : ISerializable
 			return new ResponseMessage(
 				NotRemoting.Serializer.Deserialize<AsyncEnumReturnResultMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 		else
-			throw new Exception();
+			throw new NotImplementedException($"ResponseType: {mType}");
 	}
 
 	internal void Serialize(IRemotingParty r, Stream s, MethodInfo method)
@@ -143,7 +143,7 @@ public class ResponseMessage : ISerializable
 		else if (ResponseType == ResponseType.AsyncEnumReturnResult)
 			NotRemoting.Serializer.Serialize(r, s, method, AsyncEnumReturnResult, Serializer, Compressor);
 		else
-			throw new Exception();
+			throw new NotImplementedException($"ResponseType: {ResponseType}");
 	}
 }
 

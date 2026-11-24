@@ -63,7 +63,7 @@ public class RequestMessage
 		else if (mType == RequestType.AsyncEnumCallResult)
 			res = new RequestMessage(NotRemoting.Serializer.Deserialize<AsyncEnumCallResultMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 		else
-			throw new Exception();
+			throw new NotImplementedException($"RequestType: {mType}");
 
 		res.Method = method;
 		return res;
@@ -78,7 +78,7 @@ public class RequestMessage
 		else if (RequestType == RequestType.AsyncEnumCallResult)
 			NotRemoting.Serializer.Serialize(r, s, method, AsyncEnumCallResultMessage, Serializer, Compressor);
 		else
-			throw new Exception();
+			throw new NotImplementedException($"RequestType: {RequestType}");
 
 	}
 }

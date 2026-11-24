@@ -114,7 +114,7 @@ public class RemotingServer : IRemotingParty
 
 		var all_methods = serviceType.GetMethods();
 
-		var methods = all_methods.Where(m => m.Name == methodName);
+		var methods = all_methods.Where(m => m.Name == methodName).ToArray();
 
 		if (!methods.Any())
 			throw new MissingMethodException($"Method not found: {serviceName}.{methodName}");

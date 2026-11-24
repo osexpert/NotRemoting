@@ -62,7 +62,7 @@ public class MethodCallArgument : ISerializable
 			Value = null;
 		}
 		else
-			throw new NotImplementedException("unk type: " + pt);
+			throw new NotImplementedException($"Unknown type: {pt}");
 	}
 
 	public void Deserialize(Stack<object?> st)
@@ -86,7 +86,7 @@ public class MethodCallArgument : ISerializable
 				w.Write((byte)ParameterValueType.RemoteDelegateInfo);
 			}
 			else
-				throw new NotImplementedException("unk type");
+				throw new NotImplementedException("Unknown type");
 
 			g.Serialize(w, st);
 		}
